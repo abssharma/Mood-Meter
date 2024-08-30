@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mood_scores.db'
+db = SQLAlchemy(app)
 
-# Define the questions and suggestions for low scores
 questions = {
     "How well are you sleeping?": [
         "Consider establishing a consistent sleep routine, including a regular bedtime and wake-up time, to improve your sleep quality.",
@@ -86,6 +89,17 @@ questions = {
    ]
 }
 
+class MoodScore(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.String(50), default=datetime.now().strftime('%Y-%m-%d'))
+    score = db.Column(db.Float)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'date': self.date,
+            'score': self.score
+        }
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -108,7 +122,6 @@ def index():
 
     return render_template('index.html', questions=questions)
 
-
 def rate_mental_health(average_score):
     if average_score <= 4:
         return "bad"
@@ -119,6 +132,30 @@ def rate_mental_health(average_score):
     else:
         return "excellent"
 
+@app.route('/results', methods=['POST'])
+def results():
+        average_score = float(request.form['average_score'])
+        new_score = MoodScore(score=average_score)
+        db.session.add(new_score)
+        db.session.commit()
+        return redirect(url_for('mood'))
+
+@app.route('/mood')
+def mood():
+
+    scores = MoodScore.query.order_by(MoodScore.date).all()
+    scores_dict = [score.to_dict() for score in scores]
+    return render_template('mood.html', scores=scores_dict)
+
+@app.route('/mood_scores', methods=['GET'])
+def get_mood_scores():
+    scores = MoodScore.query.all()
+    return jsonify([score.to_dict() for score in scores])
+
+@app.route('/test')
+def test():
+    scores = MoodScore.query.all()
+    return jsonify([score.to_dict() for score in scores])
 
 if __name__ == '__main__':
     app.run(debug=True)
