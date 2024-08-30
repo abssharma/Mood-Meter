@@ -49,6 +49,10 @@
         {% endif %}
 
         <a href="{{ url_for('index') }}" class="bg-blue-500 text-white py-2 px-4 mt-6 rounded-lg">Take the Assessment Again</a>
+        <form action="{{ url_for('results') }}" method="post">
+            <input type="hidden" name="average_score" value="{{ average_score }}">
+            <button type="submit" class="bg-black text-white py-2 px-4 mt-6 rounded-lg">See Your Mood Board</button>
+        </form>
     </div>
 
     <script>
