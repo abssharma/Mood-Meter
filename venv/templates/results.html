@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment Results</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.0/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-image: url('static/back.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        canvas {
+            width: 300px;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-4">Assessment Results</h1>
+        <p class="text-lg mb-2">Your average score is: <strong>{{ average_score|round(2) }}</strong></p>
+        <p class="text-lg mb-4">Your mental health rating is: <strong>{{ mental_health_status.capitalize() }}</strong></p>
+
+        <canvas id="gaugeChart"></canvas>
+
+        {% if suggestions %}
+            <h2 class="text-xl font-semibold mb-2">Suggestions for Improvement:</h2>
+            {% for question, suggestion_list in suggestions.items() %}
+                <div class="bg-black p-4 rounded-lg mb-4">
+                    <h3 class="font-semibold">{{ question }}</h3>
+                    <ul class="list-disc pl-5">
+                        {% for suggestion in suggestion_list %}
+                            <li>{{ suggestion }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="mb-4 text-4xl">Keep up the good work!</p>
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="bg-blue-500 text-white py-2 px-4 mt-6 rounded-lg">Take the Assessment Again</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            var ctx = document.getElementById('gaugeChart').getContext('2d');
+            var gaugeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+
+                    datasets: [{
+                        data: [{{ average_score }}, 10 - {{ average_score }}],
+                        backgroundColor: ['white', 'black'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    rotation: -Math.PI,
+                    circumference: Math.PI*115,
+                    cutoutPercentage: 180,
+                    tooltips: { enabled: false },
+                    plugins: {
+                        datalabels: {
+                            display: true,
+                            align: 'center',
+                            color: 'black',
+                            font: { size: 24 },
+                            formatter: (value) => value === 0 ? '' : value
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
